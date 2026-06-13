@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinner Edukasi - DUTA GENRE 2025</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Abril+Fatface&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Abril Fatface"', 'serif'],
+                        body: ['"Outfit"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --fg: #FFF8E7;
+            --muted: #8B8577;
+            --accent: #F59E0B;
+            --accent2: #10B981;
+            --card: #141414;
+            --border: #262626;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* === Latar belakang animasi === */
+        .bg-layer {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 50% at 15% 10%, rgba(245,158,11,0.1) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 85% 85%, rgba(16,185,129,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(239,71,111,0.04) 0%, transparent 50%);
+        }
+
+        .orb {
+            position: fixed; border-radius: 50%; filter: blur(100px); opacity: 0.12;
+            animation: orbFloat 18s ease-in-out infinite;
+        }
+        .orb-a { width: 450px; height: 450px; background: #F59E0B; top: -120px; left: -120px; }
+        .orb-b { width: 350px; height: 350px; background: #10B981; bottom: -80px; right: -80px; animation-delay: -6s; }
+        .orb-c { width: 280px; height: 280px; background: #EF476F; top: 40%; left: 55%; animation-delay: -12s; }
+
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.05); }
+            66% { transform: translate(-25px, 25px) scale(0.95); }
+        }
+
+        /* === Glow roda === */
+        .wheel-glow {
+            position: absolute; inset: -30px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%);
+            animation: pulseGlow 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.04); }
+        }
+
+        /* === Tombol putar === */
+        .spin-btn {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            color: #0a0a0a; font-family: 'Outfit', sans-serif; font-weight: 800;
+            font-size: 1.3rem; letter-spacing: 0.15em; padding: 1rem 3.5rem;
+            border: none; border-radius: 9999px; cursor: pointer; position: relative;
+            overflow: hidden; transition: all 0.3s ease;
+            box-shadow: 0 0 35px rgba(245,158,11,0.3), 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 0 55px rgba(245,158,11,0.5), 0 8px 25px rgba(0,0,0,0.5);
+        }
+        .spin-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+        .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .spin-btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+            transform: translateX(-100%); animation: shimmer 2.8s infinite;
+        }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        /* === Modal hasil === */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.82); backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: linear-gradient(150deg, #1a1a1a 0%, #111 100%);
+            border: 1px solid rgba(245,158,11,0.35); border-radius: 28px;
+            padding: 2.5rem 2rem; max-width: 520px; width: 92%; text-align: center;
+            transform: scale(0.75) translateY(40px);
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 30px 90px rgba(0,0,0,0.6), 0 0 80px rgba(245,158,11,0.08);
+        }
+        .modal-overlay.active .modal-box { transform: scale(1) translateY(0); }
+
+        /* === Kartu soal === */
+        .q-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 1rem 1.1rem; transition: all 0.3s ease; cursor: default;
+        }
+        .q-card:hover { border-color: rgba(245,158,11,0.4); transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .q-card.highlight { border-color: var(--accent); background: #1f1a0f;
+            box-shadow: 0 0 25px rgba(245,158,11,0.15); }
+
+        /* === Konfeti canvas === */
+        #confetti-canvas { position: fixed; inset: 0; z-index: 99; pointer-events: none; }
+
+        /* === Scrollbar === */
+        ::-webkit-scrollbar { width: 7px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        /* === Responsif === */
+        @media (max-width: 640px) {
+            .spin-btn { font-size: 1rem; padding: 0.8rem 2.2rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Latar belakang -->
+    <div class="bg-layer"></div>
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="orb orb-c"></div>
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Konten utama -->
+    <div class="relative z-10 min-h-screen flex flex-col">
+
+        <!-- Header -->
+        <header class="text-center pt-8 pb-4 px-4">
+            <div class="inline-flex items-center gap-2 mb-3">
+                <span class="block w-10 h-[2px] bg-amber-500/60"></span>
+                <span class="text-amber-500/80 text-xs font-semibold tracking-[0.3em] uppercase">Kutai Kartanegara</span>
+                <span class="block w-10 h-[2px] bg-amber-500/60"></span>
+            </div>
+            <h1 class="font-display text-5xl sm:text-6xl md:text-7xl text-amber-400 leading-none mb-2">DUTA GENRE</h1>
+            <p class="text-amber-500/70 text-lg sm:text-xl font-light tracking-widest">2025</p>
+            <p class="mt-3 text-white/50 text-sm tracking-wider">Spinner Edukasi Interaktif</p>
+        </header>
+
+        <!-- Spinner -->
+        <main class="flex-1 flex flex-col items-center px-4 pb-8">
+            <section class="mt-4 mb-6 flex flex-col items-center" aria-label="Spinner Wheel">
+                <div class="relative inline-block">
+                    <div class="wheel-glow"></div>
+                    <canvas id="wheel-canvas" width="500" height="500" style="max-width:88vw; max-height:88vw; display:block;"></canvas>
+                </div>
+                <button id="spin-btn" class="spin-btn mt-8" aria-label="Putar spinner">
+                    <i class="fas fa-play mr-2"></i>PUTAR
+                </button>
+            </section>
+
+            <!-- Riwayat spin -->
+            <div id="history-bar" class="flex flex-wrap justify-center gap-2 mb-6 max-w-2xl" style="min-height:28px;"></div>
+
+            <!-- Daftar Soal -->
+            <section class="w-full max-w-4xl mt-2" aria-label="Daftar Soal">
+                <h2 class="text-center text-amber-400/80 font-semibold text-sm tracking-[0.25em] uppercase mb-5">
+                    <i class="fas fa-list-ol mr-2"></i>Daftar Soal
+                </h2>
+                <div id="questions-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center py-6 px-4 border-t border-white/5">
+            <p class="text-white/25 text-xs tracking-wider">DUTA GENRE 2025 &mdash; Kutai Kartanegara</p>
+        </footer>
+    </div>
+
+    <!-- Modal Hasil -->
+    <div id="result-modal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-box">
+            <div class="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-500/40 flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-question text-amber-400 text-2xl"></i>
+            </div>
+            <p class="text-amber-500/70 text-xs font-semibold tracking-[0.25em] uppercase mb-1">Soal Nomor</p>
+            <p id="modal-number" class="font-display text-5xl text-amber-400 mb-5"></p>
+            <p id="modal-question" class="text-white/90 text-lg leading-relaxed mb-7 font-light"></p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button id="btn-spin-again" class="spin-btn text-sm px-6 py-3" style="font-size:0.9rem;">
+                    <i class="fas fa-redo mr-2"></i>Putar Lagi
+                </button>
+                <button id="btn-close-modal" class="px-6 py-3 rounded-full border border-white/15 text-white/60 hover:text-white hover:border-white/30 transition text-sm font-semibold tracking-wider">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ============================================
+       DATA SOAL
+    ============================================ */
+    const questions = [
+        { short: "Harapan", full: "Apa harapan Anda untuk generasi muda Kutai Kartanegara di masa depan?" },
+        { short: "Pesan", full: "Jika diberi kesempatan menyampaikan pesan kepada seluruh remaja Indonesia, apa yang akan Anda katakan?" },
+        { short: "Sukses", full: "Apa arti sukses bagi seorang remaja?" },
+        { short: "Inspirasi", full: "Siapa sosok yang paling menginspirasi Anda dan mengapa?" },
+        { short: "Zaman", full: "Menurut Bapak/Ibu, apa yang paling membedakan remaja dulu dan sekarang?" },
+        { short: "Benda?", full: "Kalau diibaratkan benda, remaja saat ini apa?" },
+        { short: "Kunci", full: "Menurutmu apa yang membuatmu sukses nantinya?" },
+        { short: "Sayang", full: "Siapa orang yang paling kamu sayang?" },
+        { short: "Guru", full: "Sebutkan guru favoritmu di sekolah!" },
+        { short: "Teman", full: "Sebutkan siapa teman terbaik kamu, kenapa?" },
+        { short: "Utang?", full: "Menurutmu meminjam uang lalu tidak dikembalikan apakah boleh? Kenapa?" },
+        { short: "CFD", full: "Apa jajanan paling enak di CFD bagimu?" },
+        { short: "Pilihan", full: "Lebih penting makan atau belajar?" },
+        { short: "Inisial", full: "Pesan untuk 1 (orang inisial)" },
+        { short: "KB?", full: "Apa kepanjangan KB?" }
+    ];
+
+    /* ============================================
+       WARNA SEGMENT
+    ============================================ */
+    const segColors = [
+        '#E8590C', '#0EA47A', '#D97706', '#D6336C', '#059669',
+        '#E07B00', '#0891B2', '#BE123C', '#CA8A04', '#0E7490',
+        '#7C3AED', '#0284C7', '#DB2777', '#65A30D', '#E879A0'
+    ];
+
+    /* ============================================
+       VARIABEL GLOBAL
+    ============================================ */
+    const canvas = document.getElementById('wheel-canvas');
+    const ctx = canvas.getContext('2d');
+    const SIZE = 500;
+    const CX = SIZE / 2;
+    const CY = SIZE / 2;
+    const OUTER_R = CX - 35;
+    const HUB_R = 42;
+    const N = questions.length;
+    const SEG_ANGLE = (Math.PI * 2) / N;
+
+    let currentAngle = 0;
+    let spinning = false;
+    let tickFlash = 0;
+    let lastSegIdx = -1;
+    let highlightIdx = -1;
+    const history = [];
+
+    /* ============================================
+       GAMBAR RODA
+    ============================================ */
+    function drawWheel() {
+        ctx.clearRect(0, 0, SIZE, SIZE);
+
+        /* --- LED lingkaran luar (statis) --- */
+        const ledR = OUTER_R + 18;
+        const ledCount = 36;
+        for (let i = 0; i < ledCount; i++) {
+            const a = (i / ledCount) * Math.PI * 2 - Math.PI / 2;
+            const x = CX + Math.cos(a) * ledR;
+            const y = CY + Math.sin(a) * ledR;
+            ctx.beginPath();
+            ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+            const lit = spinning ? ((Math.floor(Date.now() / 80) + i) % 3 === 0) : (i % 2 === 0);
+            ctx.fillStyle = lit ? '#F59E0B' : '#5C4A1E';
+            ctx.fill();
+        }
+
+        /* --- Roda (berputar) --- */
+        ctx.save();
+        ctx.translate(CX, CY);
+        ctx.rotate(currentAngle);
+
+        for (let i = 0; i < N; i++) {
+            const startA = i * SEG_ANGLE - Math.PI / 2;
+            const endA = (i + 1) * SEG_ANGLE - Math.PI / 2;
+            const midA = startA + SEG_ANGLE / 2;
+
+            /* Segment fill */
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, OUTER_R, startA, endA);
+            ctx.closePath();
+
+            /* Gradient radial untuk kedalaman */
+            const grd = ctx.createRadialGradient(0, 0, HUB_R, 0, 0, OUTER_R);
+            grd.addColorStop(0, lighten(segColors[i], 25));
+            grd.addColorStop(1, segColors[i]);
+            ctx.fillStyle = grd;
+            ctx.fill();
+
+            /* Garis pemisah */
+            ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            /* Highlight jika terpilih */
+            if (i === highlightIdx && !spinning) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, OUTER_R, startA, endA);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                ctx.fill();
+            }
+
+            /* Nomor soal (dekat tepi luar) */
+            ctx.save();
+            ctx.rotate(midA);
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.font = 'bold 13px Outfit';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+            ctx.shadowBlur = 3;
+            ctx.fillText(String(i + 1), OUTER_R * 0.88, 0);
+
+            /* Label singkat (tengah segment) */
+            ctx.font = '600 11px Outfit';
+            ctx.fillText(questions[i].short, OUTER_R * 0.6, 0);
+            ctx.shadowBlur = 0;
+            ctx.restore();
+        }
+
+        /* Cincin luar */
+        ctx.beginPath();
+        ctx.arc(0, 0, OUTER_R, 0, Math.PI * 2);
+        ctx.strokeStyle = '#D97706';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        /* Cincin dalam dekoratif */
+        ctx.beginPath();
+        ctx.arc(0, 0, OUTER_R - 8, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        /* Hub tengah */
+        const hubGrd = ctx.createRadialGradient(0, 0, 0, 0, 0, HUB_R);
+        hubGrd.addColorStop(0, '#2a2a2a');
+        hubGrd.addColorStop(1, '#111111');
+        ctx.beginPath();
+        ctx.arc(0, 0, HUB_R, 0, Math.PI * 2);
+        ctx.fillStyle = hubGrd;
+        ctx.fill();
+        ctx.strokeStyle = '#D97706';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        ctx.restore(); /* Selesai rotasi roda */
+
+        /* --- Teks PUTAR di hub (statis) --- */
+        ctx.fillStyle = '#F59E0B';
+        ctx.font = '800 15px Outfit';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PUTAR', CX, CY);
+
+        /* --- Penunjuk (pointer) statis di atas --- */
+        drawPointer();
+    }
+
+    /* Pointer panah ke bawah di atas roda */
+    function drawPointer() {
+        const px = CX;
+        const py = CY - OUTER_R + 2;
+
+        ctx.save();
+        ctx.translate(px, py);
+
+        /* Glow saat tick */
+        if (tickFlash > 0.05) {
+            ctx.shadowColor = 'rgba(245,158,11,' + tickFlash + ')';
+            ctx.shadowBlur = 25 * tickFlash;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(0, 18);
+        ctx.lineTo(-16, -8);
+        ctx.quadraticCurveTo(0, -14, 16, -8);
+        ctx.closePath();
+
+        ctx.fillStyle = '#F59E0B';
+        ctx.fill();
+        ctx.strokeStyle = '#92400E';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        /* Lingkaran kecil di pangkal */
+        ctx.beginPath();
+        ctx.arc(0, -4, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#FDE68A';
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+
+    /* ============================================
+       FUNGSI UTILITAS WARNA
+    ============================================ */
+    function lighten(hex, pct) {
+        let r = parseInt(hex.slice(1, 3), 16);
+        let g = parseInt(hex.slice(3, 5), 16);
+        let b = parseInt(hex.slice(5, 7), 16);
+        r = Math.min(255, r + Math.round((255 - r) * pct / 100));
+        g = Math.min(255, g + Math.round((255 - g) * pct / 100));
+        b = Math.min(255, b + Math.round((255 - b) * pct / 100));
+        return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+    }
+
+    /* ============================================
+       LOGIKA PUTARAN
+    ============================================ */
+    function getWinningIndex() {
+        let angle = (-currentAngle) % (Math.PI * 2);
+        if (angle < 0) angle += Math.PI * 2;
+        return Math.floor(angle / SEG_ANGLE) % N;
+    }
+
+    function spin() {
+        if (spinning) return;
+        spinning = true;
+        highlightIdx = -1;
+        tickFlash = 0;
+        lastSegIdx = getWinningIndex();
+
+        const btn = document.getElementById('spin-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>BERPUTAR...';
+
+        const duration = 4500 + Math.random() * 2500;
+        const totalRot = Math.PI * 2 * (6 + Math.random() * 6) + Math.random() * Math.PI * 2;
+        const startAngle = currentAngle;
+        const startTime = performance.now();
+
+        function animate(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+
+            /* Easing: keluar dari cubic untuk perlambatan natural */
+            const eased = 1 - Math.pow(1 - progress, 4);
+            currentAngle = startAngle + totalRot * eased;
+
+            /* Deteksi perpindahan segment (efek tick) */
+            const curSeg = getWinningIndex();
+            if (curSeg !== lastSegIdx) {
+                lastSegIdx = curSeg;
+                tickFlash = 1.0;
+            }
+            tickFlash *= 0.88;
+
+            drawWheel();
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                spinning = false;
+                tickFlash = 0;
+                const winIdx = getWinningIndex();
+                highlightIdx = winIdx;
+                drawWheel();
+                showResult(winIdx);
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play mr-2"></i>PUTAR';
+            }
+        }
+
+        requestAnimationFrame(animate);
+    }
+
+    /* ============================================
+       TAMPILKAN HASIL
+    ============================================ */
+    function showResult(idx) {
+        const modal = document.getElementById('result-modal');
+        document.getElementById('modal-number').textContent = idx + 1;
+        document.getElementById('modal-question').textContent = questions[idx].full;
+        modal.classList.add('active');
+
+        /* Tambah ke riwayat */
+        history.push(idx + 1);
+        renderHistory();
+
+        /* Highlight kartu soal */
+        highlightCard(idx);
+
+        /* Konfeti! */
+        launchConfetti();
+    }
+
+    function closeModal() {
+        document.getElementById('result-modal').classList.remove('active');
+    }
+
+    /* ============================================
+       RIWAYAT SPIN
+    ============================================ */
+    function renderHistory() {
+        const bar = document.getElementById('history-bar');
+        bar.innerHTML = history.map((num, i) => {
+            const c = segColors[num - 1];
+            return `<span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold text-white" style="background:${c}; box-shadow:0 2px 8px ${c}44;">${num}</span>`;
+        }).join('');
+    }
+
+    /* ============================================
+       KARTU SOAL
+    ============================================ */
+    function renderQuestions() {
+        const grid = document.getElementById('questions-grid');
+        grid.innerHTML = questions.map((q, i) => `
+            <div class="q-card" id="qcard-${i}">
+                <div class="flex items-start gap-3">
+                    <span class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:${segColors[i]}">${i + 1}</span>
+                    <p class="text-white/75 text-sm leading-relaxed">${q.full}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function highlightCard(idx) {
+        document.querySelectorAll('.q-card').forEach(c => c.classList.remove('highlight'));
+        const card = document.getElementById('qcard-' + idx);
+        if (card) {
+            card.classList.add('highlight');
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    /* ============================================
+       SISTEM KONFETI
+    ============================================ */
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const cctx = confettiCanvas.getContext('2d');
+    let confettiParts = [];
+    let confettiRunning = false;
+
+    function resizeConfetti() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeConfetti);
+    resizeConfetti();
+
+    function launchConfetti() {
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight / 2;
+        for (let i = 0; i < 120; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 4 + Math.random() * 12;
+            confettiParts.push({
+                x: cx, y: cy,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 6,
+                w: 5 + Math.random() * 8,
+                h: 3 + Math.random() * 5,
+                color: segColors[Math.floor(Math.random() * segColors.length)],
+                rot: Math.random() * Math.PI * 2,
+                rotV: (Math.random() - 0.5) * 0.25,
+                life: 1,
+                decay: 0.006 + Math.random() * 0.008,
+                gravity: 0.18 + Math.random() * 0.1
+            });
+        }
+        if (!confettiRunning) {
+            confettiRunning = true;
+            animateConfetti();
+        }
+    }
+
+    function animateConfetti() {
+        cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confettiParts = confettiParts.filter(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity;
+            p.vx *= 0.99;
+            p.rot += p.rotV;
+            p.life -= p.decay;
+            if (p.life <= 0) return false;
+
+            cctx.save();
+            cctx.translate(p.x, p.y);
+            cctx.rotate(p.rot);
+            cctx.globalAlpha = Math.max(0, p.life);
+            cctx.fillStyle = p.color;
+            cctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            cctx.restore();
+            return true;
+        });
+
+        if (confettiParts.length > 0) {
+            requestAnimationFrame(animateConfetti);
+        } else {
+            confettiRunning = false;
+            cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+    }
+
+    /* ============================================
+       EVENT LISTENERS
+    ============================================ */
+    document.getElementById('spin-btn').addEventListener('click', spin);
+    document.getElementById('btn-spin-again').addEventListener('click', () => {
+        closeModal();
+        setTimeout(spin, 350);
+    });
+    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+
+    /* Tutup modal dengan klik di luar */
+    document.getElementById('result-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeModal();
+    });
+
+    /* Tutup modal dengan Escape */
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+        if (e.key === ' ' || e.key === 'Enter') {
+            if (!document.getElementById('result-modal').classList.contains('active')) {
+                spin();
+            }
+        }
+    });
+
+    /* ============================================
+       INISIALISASI
+    ============================================ */
+    renderQuestions();
+    drawWheel();
+
+    /* Animasi idle halus — sangat lambat berputar saat tidak disentuh */
+    let idleAnim;
+    function idleRotate() {
+        if (!spinning) {
+            currentAngle += 0.001;
+            drawWheel();
+        }
+        idleAnim = requestAnimationFrame(idleRotate);
+    }
+    idleRotate();
+
+    </script>
+</body>
+</html>
